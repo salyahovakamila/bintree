@@ -1,0 +1,193 @@
+import sys
+
+class Node:
+    def __init__(self, x):
+        self.key = x
+        self.left = None
+        self.right = None
+        self.h = 1
+
+
+def height(v):
+    if v is None:
+        return 0
+    return v.h
+
+
+def upd(v):
+    v.h = max(height(v.left), height(v.right)) + 1
+
+
+def bf(v):
+    return height(v.right) - height(v.left)
+
+
+def rotate_left(v):
+    u = v.right
+    v.right = u.left
+    u.left = v
+    upd(v)
+    upd(u)
+    return u
+
+
+def rotate_right(v):
+    u = v.left
+    v.left = u.right
+    u.right = v
+    upd(v)
+    upd(u)
+    return u
+
+
+def balance(v):
+    upd(v)
+
+    if bf(v) == 2:
+        if bf(v.right) < 0:
+            v.right = rotate_right(v.right)
+        return rotate_left(v)
+
+    if bf(v) == -2:
+        if bf(v.left) > 0:
+            v.left = rotate_left(v.left)
+        return rotate_right(v)
+
+    return v
+
+
+def add(v, x):
+    if v is None:
+        return Node(x)
+
+    if x < v.key:
+        v.left = add(v.left, x)
+    elif x > v.key:
+        v.right = add(v.right, x)
+    else:
+        return v
+
+    return balance(v)
+
+
+def remove_min(v):
+    if v.left is None:
+        return v.right, v.key
+
+    v.left, x = remove_min(v.left)
+    return balance(v), x
+
+
+def delete(v, x):
+    if v is None:
+        return None
+
+    if x < v.key:
+        v.left = delete(v.left, x)
+    elif x > v.key:
+        v.right = delete(v.right, x)
+    else:
+        if v.left is None:
+            return v.right
+        if v.right is None:
+            return v.left
+
+        v.right, x = remove_min(v.right)
+        v.key = x
+
+    return balance(v)
+
+
+def exists(v, x):
+    while v is not None:
+        if v.key == x:
+            return True
+        if x < v.key:
+            v = v.left
+        else:
+            v = v.right
+    return False
+
+
+def next_key(v, x):
+    ans = None
+    while v is not None:
+        if v.key >= x:
+            ans = v.key
+            v = v.left
+        else:
+            v = v.right
+    return ans
+
+
+def prev_key(v, x):
+    ans = None
+    while v is not None:
+        if v.key <= x:
+            ans = v.key
+            v = v.right
+        else:
+            v = v.left
+    return ans
+
+
+def print_tree(v):
+    if v is None:
+        return "Empty"
+
+    a = []
+    st = [v]
+
+    while st:
+        cur = st.pop()
+        a.append(str(cur.key))
+
+        if cur.right is not None:
+            st.append(cur.right)
+        if cur.left is not None:
+            st.append(cur.left)
+
+    return " ".join(a)
+
+
+q = int(sys.stdin.readline())
+root = None
+ans = []
+
+for i in range(q):
+    s = sys.stdin.readline().split()
+    cmd = s[0]
+
+    if cmd == "add":
+        root = add(root, int(s[1]))
+
+    elif cmd == "del":
+        root = delete(root, int(s[1]))
+
+    elif cmd == "exists":
+        if exists(root, int(s[1])):
+            ans.append("YES")
+        else:
+            ans.append("NO")
+
+    elif cmd == "next":
+        x = next_key(root, int(s[1]))
+        ans.append(str(x) if x is not None else "None")
+
+    elif cmd == "prev":
+        x = prev_key(root, int(s[1]))
+        ans.append(str(x) if x is not None else "None")
+
+    elif cmd == "root":
+        if root is None:
+            ans.append("Empty")
+        else:
+            ans.append(str(root.key))
+
+    elif cmd == "height":
+        ans.append(str(height(root)))
+
+    elif cmd == "print":
+        ans.append(print_tree(root))
+
+print("\n".join(ans))
