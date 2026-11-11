@@ -1,0 +1,75 @@
+import sys
+
+class HashTable:
+    def __init__(self):
+        self.buckets = [[] for _ in range(8)]
+        self.count = 0
+
+    def _hash(self, key):
+        h = 14695981039346656037
+        for c in key:
+            h ^= ord(c)
+            h = (h * 1099511628211) & 0xFFFFFFFFFFFFFFFF
+        return h
+
+    def _resize(self):
+        old = self.buckets
+        self.buckets = [[] for _ in range(len(old) * 2)]
+        for bucket in old:
+            for key, value in bucket:
+                index = self._hash(key) % len(self.buckets)
+                self.buckets[index].append([key, value])
+
+    def put(self, key, value):
+        index = self._hash(key) % len(self.buckets)
+        bucket = self.buckets[index]
+        for pair in bucket:
+            if pair[0] == key:
+                pair[1] = value
+                return
+        bucket.append([key, value])
+        self.count += 1
+        if self.count * 4 > len(self.buckets) * 3:
+            self._resize()
+
+    def get(self, key):
+        index = self._hash(key) % len(self.buckets)
+        for pair in self.buckets[index]:
+            if pair[0] == key:
+                return pair[1]
+        return None
+
+    def delete(self, key):
+        index = self._hash(key) % len(self.buckets)
+        bucket = self.buckets[index]
+        for i in range(len(bucket)):
+            if bucket[i][0] == key:
+                value = bucket[i][1]
+                bucket.pop(i)
+                self.count -= 1
+                return value
+        return None
+
+    def size(self):
+        return self.count
+
+
+q = int(sys.stdin.readline())
+table = HashTable()
+
+for _ in range(q):
+    command = sys.stdin.readline().split()
+
+    if command[0] == "put":
+        table.put(command[1], int(command[2]))
+
+    elif command[0] == "get":
+        value = table.get(command[1])
+        print(value if value is not None else "Error")
+
+    elif command[0] == "del":
+        value = table.delete(command[1])
+        print(value if value is not None else "Error")
+
+    elif command[0] == "size":
+        print(table.size())
